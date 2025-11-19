@@ -7,15 +7,18 @@ import type { Map as LeafletMap } from "leaflet";
 
 // Components
 import CustomMarker from "./custom-marker";
+import { WeatherCard } from "./components/WeatherCard";
 
 // Services
 import { GeocodingService } from "./services/geocoding.service";
 import { POIService } from "./services/poi.service";
 import { RoutingService } from "./services/routing.service";
+import { WeatherService } from "./services/weather.service";
 
 // Types
 import type { POI } from "./types/poi.types";
 import type { RouteGeoJSON } from "./types/map.types";
+import type { WeatherResponse, WeatherOverview } from "./types/weather.types";
 
 // Constants
 import { API_CONFIG } from "./constants/api.constants";
@@ -81,6 +84,8 @@ export default function Map() {
   const [loading, setLoading] = useState<boolean>(false);
   const [statusMsg, setStatusMsg] = useState<string>("");
   const [mapMode, setMapMode] = useState<MapMode>('standard');
+  const [weatherData, setWeatherData] = useState<WeatherResponse | null>(null);
+  const [weatherOverview, setWeatherOverview] = useState<WeatherOverview | null>(null);
 
   // Event Handlers
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -112,7 +117,7 @@ export default function Map() {
       setMapCenter(newCenter);
 
       // Step 3: Find nearby POIs
-      setStatusMsg("Đang tìm quán ăn gần đây...");
+      setStatusMsg("Đang tìm quán cà phê gần đây...");
       const foundPois = await POIService.findNearby(
         parseFloat(lat),
         parseFloat(lon)
@@ -125,6 +130,18 @@ export default function Map() {
           ? `Tìm thấy ${foundPois.length} quán cà phê`
           : "Không tìm thấy quán cà phê gần đây"
       );
+
+      // Step 4: Fetch weather data and overview
+      setStatusMsg("Đang tải thông tin thời tiết...");
+
+      const [weather, overview] = await Promise.all([
+        WeatherService.getWeatherData(parseFloat(lat), parseFloat(lon)),
+        WeatherService.getWeatherOverview(parseFloat(lat), parseFloat(lon))
+      ]);
+
+      setWeatherData(weather);
+      setWeatherOverview(overview);
+      setStatusMsg(`Tìm thấy ${foundPois.length} quán cà phê. Thời tiết đã cập nhật.`);
 
     } catch (error) {
       console.error("Search error:", error);
@@ -169,18 +186,18 @@ export default function Map() {
           type="text"
           value={inputValue}
           onChange={handleChange}
-          placeholder="Nhap dia diem can tim (vd: Quan 1, TP.HCM)..."
+          placeholder="Nhập địa điểm cần tìm (vd: Quận 1, TP.HCM)..."
           style={inputStyle}
         />
         <button type="submit" style={searchButtonStyle} disabled={loading}>
-          {loading ? "Dang tim..." : "Tim va Di chuyen"}
+          {loading ? "Đang tìm..." : "Tìm và Di chuyển"}
         </button>
         <button
           type="button"
           onClick={handleClearRoute}
           style={clearButtonStyle}
         >
-          Xoa duong
+          Xóa đường
         </button>
 
         {/* Status Message */}
@@ -201,7 +218,7 @@ export default function Map() {
           textTransform: 'uppercase',
           letterSpacing: '0.5px'
         }}>
-          Che do ban do
+          Chế độ bản đồ
         </div>
         {(Object.keys(TILE_LAYERS) as MapMode[]).map((mode) => (
           <button
@@ -240,7 +257,7 @@ export default function Map() {
                 paddingBottom: '8px',
                 borderBottom: '2px solid #e2e8f0'
               }}>
-                Vi tri tim kiem
+                Vị trí tìm kiếm
               </div>
               <small style={popupSmallTextStyle}>
                 Lat: {mapCenter[0].toFixed(6)}
@@ -282,18 +299,18 @@ export default function Map() {
                   textTransform: 'uppercase',
                   letterSpacing: '0.5px'
                 }}>
-                  Quan #{index + 1}/{pois.length}
+                  Quán #{index + 1}/{pois.length}
                 </div>
                 <small style={popupSmallTextStyle}>
                   <div style={{ marginTop: '6px' }}>
-                    Loai: {poi.type}
+                    Loại: {poi.type}
                   </div>
                   <div style={{ marginTop: '4px', fontSize: '11px', color: '#a0aec0' }}>
                     {poi.position[0].toFixed(6)}, {poi.position[1].toFixed(6)}
                   </div>
                   {poi.tags.phone && (
                     <div style={{ marginTop: '8px', color: '#4a5568' }}>
-                      Dien thoai: {poi.tags.phone}
+                      Điện thoại: {poi.tags.phone}
                     </div>
                   )}
                   {poi.tags.website && (
@@ -306,7 +323,7 @@ export default function Map() {
                   onClick={() => handleGetRoute(poi)}
                   style={routeButtonStyle}
                 >
-                  Chi duong toi day
+                  Chỉ đường tới đây
                 </button>
               </div>
             </Popup>
@@ -328,6 +345,18 @@ export default function Map() {
           />
         )}
       </MapContainer>
+
+      {/* Weather Card */}
+      {weatherData && (
+        <WeatherCard
+          weatherData={weatherData}
+          weatherOverview={weatherOverview}
+          onClose={() => {
+            setWeatherData(null);
+            setWeatherOverview(null);
+          }}
+        />
+      )}
     </div>
   );
 }

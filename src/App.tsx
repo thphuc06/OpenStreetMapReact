@@ -26,7 +26,7 @@ export default function App() {
           letterSpacing: '-0.5px',
           textAlign: 'center',
         }}>
-          Tim Quan Ca Phe Gan Ban
+          Tìm Quán Cà Phê Gần Bạn
         </h1>
         <p style={{
           margin: '8px 0 0 0',
@@ -35,7 +35,7 @@ export default function App() {
           textAlign: 'center',
           fontWeight: '500',
         }}>
-          Kham pha cac quan ca phe va duong di toi do
+          Khám phá các quán cà phê và đường đi tới đó
         </p>
       </header>
       <Map />

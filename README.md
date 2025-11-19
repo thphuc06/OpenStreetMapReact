@@ -99,3 +99,52 @@ The Firebase configuration (API Keys) is included in the source code. These keys
 -----
 
 **Author:** [thphuc06](https://www.google.com/search?q=https://github.com/thphuc06)
+
+
+## 🔧 Administrator Guide (For Owner Only)
+
+These steps are for the project owner (`thphuc06`) when setting up the project on a new machine to manage deployments manually.
+
+### 1. One-time Setup on New Machine
+If you are on a fresh computer, you need to install Firebase CLI globally and log in to your Google account.
+
+```bash
+# 1. Install Firebase Tools globally (if not installed)
+npm install -g firebase-tools
+
+# 2. Login to your Google Account (The one hosting the project)
+firebase login
+````
+
+*Note: You **DO NOT** need to run `firebase init` again, as the configuration files (`firebase.json`, `.firebaserc`) are already in the repo.*
+
+### 2\. Deployment Workflows
+
+#### Method A: Automatic Deployment (Recommended)
+
+Just push to the `main` branch. GitHub Actions will handle the build and deploy process.
+
+```bash
+git push origin main
+```
+
+#### Method B: Manual Deployment (Emergency only)
+
+If GitHub Actions is down or you need to force a deploy from your local machine:
+
+```bash
+# 1. Build the project
+npm run build
+
+# 2. Deploy to Firebase
+firebase deploy
+```
+
+### 3\. Troubleshooting
+
+If you encounter permission errors during deployment, ensure you are logged in with the correct account:
+
+```bash
+firebase logout
+firebase login
+```

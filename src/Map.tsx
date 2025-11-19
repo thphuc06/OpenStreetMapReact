@@ -1,122 +1,96 @@
-// Map.tsx - FIXED VERSION (theo logic Python + FIX 504)
+// Map.tsx - REFACTORED VERSION
+// Uses service layer for API calls, imported types, and separated styles
+
 import React, { useState } from "react";
 import { MapContainer, Popup, TileLayer, GeoJSON } from "react-leaflet";
-import CustomMarker from "./custom-marker";
-import Marker2Url from "./assets/mapMarker2.svg";
 import type { Map as LeafletMap } from "leaflet";
 
-// TypeScript interfaces
-interface POI {
-  id: string | number;
-  name: string;
-  position: [number, number];
-  tags: {
-    phone?: string;
-    website?: string;
-    [key: string]: any;
-  };
-  type: string;
-}
+// Components
+import CustomMarker from "./custom-marker";
 
-interface RouteGeoJSON {
-  type: "Feature";
-  geometry: any;
-  properties: {
-    distance: number;
-    distanceKm: string;
-    duration: number;
-    durationMin: number;
-    destination: string;
-  };
-}
+// Services
+import { GeocodingService } from "./services/geocoding.service";
+import { POIService } from "./services/poi.service";
+import { RoutingService } from "./services/routing.service";
 
-const mapContainerStyle: React.CSSProperties = {
-  width: "100%",
-  height: "500px",
-  position: "relative",
-};
+// Types
+import type { POI } from "./types/poi.types";
+import type { RouteGeoJSON } from "./types/map.types";
 
-const formStyle: React.CSSProperties = {
-  position: "absolute",
-  top: "10px",
-  left: "50px",
-  zIndex: 1000,
-  background: "white",
-  padding: "10px",
-  borderRadius: "5px",
-  display: "flex",
-  gap: "5px",
-  flexWrap: "wrap",
-  fontSize: "14px",
-};
+// Constants
+import { API_CONFIG } from "./constants/api.constants";
 
-const buttonStyle = {
-  padding: "6px 12px",
-  border: "none",
-  borderRadius: "4px",
-  cursor: "pointer",
-  fontSize: "12px",
-  fontWeight: "bold",
-};
+// Styles
+import {
+  mapContainerStyle,
+  formStyle,
+  searchButtonStyle,
+  clearButtonStyle,
+  routeButtonStyle,
+  statusStyle,
+  popupStyle,
+  popupSmallTextStyle,
+} from "./styles/map.styles";
 
-const searchButtonStyle = {
-  ...buttonStyle,
-  background: "#007bff",
-  color: "white",
-};
-
-const clearButtonStyle = {
-  ...buttonStyle,
-  background: "#dc3545",
-  color: "white",
-};
-
-const routeButtonStyle = {
-  ...buttonStyle,
-  background: "#28a745",
-  color: "white",
-  width: "100%",
-  marginTop: "8px",
-};
+// Assets
+import Marker2Url from "./assets/mapMarker2.svg";
 
 export default function Map() {
+  // State
   const [inputValue, setInputValue] = useState<string>("");
   const [pois, setPois] = useState<POI[]>([]);
-  const [mapCenter, setMapCenter] = useState<[number, number]>([10.762486, 106.682765]);
+  const [mapCenter, setMapCenter] = useState<[number, number]>(API_CONFIG.DEFAULT_CENTER);
   const [mapInstance, setMapInstance] = useState<LeafletMap | null>(null);
   const [routeGeoJSON, setRouteGeoJSON] = useState<RouteGeoJSON | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [statusMsg, setStatusMsg] = useState<string>("");
 
+  // Event Handlers
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(event.target.value);
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!mapInstance) return;
+    if (!mapInstance || !inputValue.trim()) return;
 
     setLoading(true);
     setStatusMsg("Đang tìm kiếm...");
 
     try {
-      const location = await getLocation(inputValue);
-      if (location && location.length > 0) {
-        const { lat, lon } = location[0];
-        const newCenter: [number, number] = [parseFloat(lat), parseFloat(lon)];
+      // Step 1: Geocode location
+      const locations = await GeocodingService.getLocation(inputValue);
 
-        mapInstance.flyTo(newCenter, 13);
-        setMapCenter(newCenter);
-
-        setStatusMsg("Đang tìm quán ăn gần đây...");
-        await findNearbyPOIs(parseFloat(lat), parseFloat(lon));
-        setRouteGeoJSON(null);
-      } else {
+      if (!locations || locations.length === 0) {
         alert("Không tìm thấy vị trí này.");
         setStatusMsg("Không tìm thấy vị trí");
+        return;
       }
+
+      const { lat, lon } = locations[0];
+      const newCenter: [number, number] = [parseFloat(lat), parseFloat(lon)];
+
+      // Step 2: Move map to location
+      mapInstance.flyTo(newCenter, API_CONFIG.DEFAULT_ZOOM);
+      setMapCenter(newCenter);
+
+      // Step 3: Find nearby POIs
+      setStatusMsg("Đang tìm quán ăn gần đây...");
+      const foundPois = await POIService.findNearby(
+        parseFloat(lat),
+        parseFloat(lon)
+      );
+
+      setPois(foundPois);
+      setRouteGeoJSON(null);
+      setStatusMsg(
+        foundPois.length > 0
+          ? `Tìm thấy ${foundPois.length} quán cà phê`
+          : "Không tìm thấy quán cà phê gần đây"
+      );
+
     } catch (error) {
-      console.error("Lỗi:", error);
+      console.error("Search error:", error);
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
       alert("Lỗi tìm kiếm: " + errorMessage);
       setStatusMsg("Lỗi tìm kiếm");
@@ -125,141 +99,34 @@ export default function Map() {
     }
   };
 
-  // Nominatim - Geocoding
-  const getLocation = async (place: string) => {
+  const handleGetRoute = async (poi: POI) => {
+    if (!mapInstance) return;
+
     try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(place)}&format=jsonv2&limit=1`,
-        {
-          headers: {
-            'Accept': 'application/json',
-            'User-Agent': 'OSM-Demo-Travel-App/1.0'
-          }
-        }
+      console.log(`\nChỉ đường từ [${mapCenter}] đến [${poi.position}] - "${poi.name}"`);
+
+      const route = await RoutingService.getRoute(mapCenter, poi.position, poi.name);
+
+      setRouteGeoJSON(route);
+      setStatusMsg(
+        `Tuyến: ${route.properties.distanceKm} km, ~${route.properties.durationMin} phút tới "${poi.name}"`
       );
-
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-      const data = await response.json();
-      console.log("Geocoding result:", data[0]);
-      return data;
     } catch (error) {
-      console.error("Geocoding error:", error);
-      throw error;
-    }
-  };
-
-  // Overpass API - Tìm POI theo bán kính (NWR)
-  // FIX 504: Thay timeout từ 60 → 30, RADIUS từ 1000 → 500
-  const findNearbyPOIs = async (lat: number, lon: number) => {
-    try {
-      const RADIUS_M = 500; // THAY ĐỔI: 1000 → 500 (nhanh hơn, ít timeout)
-
-      const query = `
-[out:json][timeout:30];
-nwr(around:${RADIUS_M},${lat},${lon})["amenity"="cafe"];
-out center 20;
-      `;
-
-      console.log("Sending Overpass query:", query);
-
-      const response = await fetch("https://overpass-api.de/api/interpreter", {
-        method: "POST",
-        body: query,
-      });
-
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-      const data = await response.json();
-      console.log("Overpass result:", data.elements);
-
-      if (data.elements && data.elements.length > 0) {
-        // Lấy tối đa 5 POI
-        const foundPois = data.elements.slice(0, 5).map((element: any, index: number) => {
-          const poiLat = element.center ? element.center.lat : element.lat;
-          const poiLon = element.center ? element.center.lon : element.lon;
-          const name = element.tags?.name || `Quán cà phê ${index + 1}`;
-
-          return {
-            id: element.id || `poi_${index}`,
-            name,
-            position: [poiLat, poiLon],
-            tags: element.tags || {},
-            type: element.type,
-          };
-        });
-
-        console.log(`Tìm thấy ${foundPois.length} quán cà phê:`, foundPois);
-        setPois(foundPois);
-        setStatusMsg(`Tìm thấy ${foundPois.length} quán cà phê`);
-      } else {
-        console.log("Không tìm thấy POI nào");
-        setPois([]);
-        setStatusMsg("Không tìm thấy quán cà phê gần đây");
-      }
-    } catch (error) {
-      console.error("Overpass error:", error);
+      console.error("Routing error:", error);
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
-      alert("Lỗi tìm POI: " + errorMessage);
-      setStatusMsg("Lỗi tìm quán");
-    }
-  };
-
-  // OSRM - Routing
-  const getRoute = async (startPoint: [number, number], endPoint: [number, number], poiName: string) => {
-    try {
-      const lat1 = startPoint[0];
-      const lon1 = startPoint[1];
-      const lat2 = endPoint[0];
-      const lon2 = endPoint[1];
-
-      const coords = `${lon1},${lat1};${lon2},${lat2}`;
-      const url = `https://router.project-osrm.org/route/v1/driving/${coords}?geometries=geojson&overview=full`;
-
-      console.log(`OSRM request: ${url}`);
-
-      const response = await fetch(url);
-
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-      const data = await response.json();
-      console.log("OSRM result:", data);
-
-      if (data.routes && data.routes.length > 0) {
-        const route = data.routes[0];
-        const distanceKm = (route.distance / 1000).toFixed(2);
-        const durationMin = Math.round(route.duration / 60);
-
-        const routeGeoJSONFeature: RouteGeoJSON = {
-          type: "Feature",
-          geometry: route.geometry,
-          properties: {
-            distance: route.distance,
-            distanceKm,
-            duration: route.duration,
-            durationMin,
-            destination: poiName,
-          },
-        };
-
-        setRouteGeoJSON(routeGeoJSONFeature);
-        setStatusMsg(`Tuyến: ${distanceKm} km, ~${durationMin} phút tới "${poiName}"`);
-        console.log(`Route: ${distanceKm} km, ${durationMin} phút`);
-      } else {
-        alert("Không thể tìm thấy đường đi");
-        setStatusMsg("Không tìm thấy đường");
-      }
-    } catch (error) {
-      console.error("OSRM error:", error);
-      const errorMessage = error instanceof Error ? error.message : "Unknown error";
-      alert("Lỗi routing: " + errorMessage);
+      alert("Lỗi tìm đường: " + errorMessage);
       setStatusMsg("Lỗi tìm đường");
     }
   };
 
+  const handleClearRoute = () => {
+    setRouteGeoJSON(null);
+    setStatusMsg("");
+  };
+
   return (
     <div style={mapContainerStyle}>
-      {/* Form tìm kiếm */}
+      {/* Search Form */}
       <form onSubmit={handleSubmit} style={formStyle}>
         <input
           type="text"
@@ -273,34 +140,24 @@ out center 20;
         </button>
         <button
           type="button"
-          onClick={() => {
-            setRouteGeoJSON(null);
-            setStatusMsg("");
-          }}
+          onClick={handleClearRoute}
           style={clearButtonStyle}
         >
           Xóa đường
         </button>
-        {/* Status message */}
+
+        {/* Status Message */}
         {statusMsg && (
-          <div style={{
-            width: "100%",
-            fontSize: "12px",
-            marginTop: "4px",
-            padding: "4px 8px",
-            background: "#f0f0f0",
-            borderRadius: "3px",
-            color: "#333"
-          }}>
+          <div style={statusStyle}>
             {statusMsg}
           </div>
         )}
       </form>
 
-      {/* Map */}
+      {/* Map Container */}
       <MapContainer
         center={mapCenter}
-        zoom={13}
+        zoom={API_CONFIG.DEFAULT_ZOOM}
         scrollWheelZoom={false}
         style={{ width: "100%", height: "100%" }}
         ref={setMapInstance}
@@ -310,7 +167,7 @@ out center 20;
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
-        {/* Marker điểm tìm kiếm gốc */}
+        {/* Search Location Marker */}
         <CustomMarker position={mapCenter}>
           <Popup>
             <div style={{ minWidth: "220px" }}>
@@ -333,10 +190,10 @@ out center 20;
             iconUrl={Marker2Url}
           >
             <Popup>
-              <div style={{ minWidth: "280px" }}>
+              <div style={popupStyle}>
                 <strong>{poi.name}</strong>
                 <br />
-                <small style={{ color: "#666" }}>
+                <small style={popupSmallTextStyle}>
                   Quán #{index + 1}/{pois.length}
                   <br />
                   Type: {poi.type}
@@ -347,24 +204,19 @@ out center 20;
                   {poi.tags.phone && (
                     <>
                       <br />
-                      {poi.tags.phone}
+                      📞 {poi.tags.phone}
                     </>
                   )}
                   {poi.tags.website && (
                     <>
                       <br />
-                      {poi.tags.website}
+                      🌐 {poi.tags.website}
                     </>
                   )}
                 </small>
                 <br />
                 <button
-                  onClick={() => {
-                    if (mapInstance) {
-                      console.log(`\nChỉ đường từ [${mapCenter}] đến [${poi.position}] - "${poi.name}"`);
-                      getRoute(mapCenter, poi.position, poi.name);
-                    }
-                  }}
+                  onClick={() => handleGetRoute(poi)}
                   style={routeButtonStyle}
                 >
                   Chỉ đường từ đây
@@ -374,7 +226,7 @@ out center 20;
           </CustomMarker>
         ))}
 
-        {/* Route visualization */}
+        {/* Route Visualization */}
         {routeGeoJSON && (
           <GeoJSON
             key={JSON.stringify(routeGeoJSON)}

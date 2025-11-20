@@ -1,6 +1,3 @@
-// Map.tsx - REFACTORED VERSION
-// Uses service layer for API calls, imported types, and separated styles
-
 import React, { useState } from "react";
 import { MapContainer, Popup, TileLayer, GeoJSON } from "react-leaflet";
 import type { Map as LeafletMap } from "leaflet";
@@ -27,22 +24,6 @@ import type { WeatherResponse, WeatherOverview } from "./types/weather.types";
 
 // Constants
 import { API_CONFIG } from "./constants/api.constants";
-
-// Styles
-import {
-  mapContainerStyle,
-  formStyle,
-  searchButtonStyle,
-  clearButtonStyle,
-  routeButtonStyle,
-  statusStyle,
-  popupStyle,
-  popupSmallTextStyle,
-  inputStyle,
-  mapModeSwitcherStyle,
-  mapModeButtonStyle,
-  mapModeButtonActiveStyle,
-} from "./styles/map.styles";
 
 // Assets
 import Marker2Url from "./assets/mapMarker2.svg";
@@ -236,100 +217,195 @@ export default function Map() {
   };
 
   return (
-    <div style={mapContainerStyle}>
-      {/* User Info & Logout */}
+    <div style={{
+      width: "100%",
+      height: "calc(100vh - 180px)",
+      minHeight: "600px",
+      position: "relative",
+      borderRadius: "16px",
+      overflow: "hidden",
+      boxShadow: "0 20px 60px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05)",
+      flex: 1,
+    }}>
+      {/* ===== TOP BAR - User Info & Map Mode ===== */}
       <div style={{
         position: 'absolute',
-        top: '20px',
-        right: '20px',
-        zIndex: 1000,
+        top: '16px',
+        left: '16px',
+        right: '16px',
+        zIndex: 1001,
         display: 'flex',
-        gap: '8px',
-        alignItems: 'center',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        gap: '12px',
+        flexWrap: 'wrap',
       }}>
-        <div style={{
+        {/* Left side: Search Form */}
+        <form onSubmit={handleSubmit} style={{
+          flex: '1 1 300px',
+          minWidth: '280px',
+          maxWidth: '500px',
           background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.9) 100%)',
           backdropFilter: 'blur(20px)',
-          border: '1px solid rgba(255, 255, 255, 0.8)',
+          padding: '16px',
           borderRadius: '12px',
-          padding: '10px 16px',
-          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)',
-          fontSize: '14px',
-          color: '#2d3748',
-          fontWeight: '500',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '10px',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+          border: '1px solid rgba(255, 255, 255, 0.8)',
         }}>
-          {currentUser?.isAnonymous ? '👤 Khách' : `👤 ${currentUser?.email || 'User'}`}
-        </div>
-        <button
-          onClick={() => signOut()}
-          style={{
-            background: '#e53e3e',
-            color: 'white',
-            border: 'none',
-            borderRadius: '12px',
-            padding: '10px 16px',
-            fontSize: '13px',
-            fontWeight: '600',
-            cursor: 'pointer',
-            boxShadow: '0 4px 16px rgba(229, 62, 62, 0.3)',
-          }}
-        >
-          Đăng xuất
-        </button>
-      </div>
-
-      {/* Search History */}
-      <SearchHistory onSelectHistory={handleSelectHistory} />
-
-      {/* Search Form */}
-      <form onSubmit={handleSubmit} style={formStyle}>
-        <input
-          type="text"
-          value={inputValue}
-          onChange={handleChange}
-          placeholder="Nhập địa điểm cần tìm (vd: Quận 1, TP.HCM)..."
-          style={inputStyle}
-        />
-        <button type="submit" style={searchButtonStyle} disabled={loading}>
-          {loading ? "Đang tìm..." : "Tìm và Di chuyển"}
-        </button>
-        <button
-          type="button"
-          onClick={handleClearRoute}
-          style={clearButtonStyle}
-        >
-          Xóa đường
-        </button>
-
-        {/* Status Message */}
-        {statusMsg && (
-          <div style={statusStyle}>
-            {statusMsg}
+          <input
+            type="text"
+            value={inputValue}
+            onChange={handleChange}
+            placeholder="Nhập địa điểm (vd: Quận 1, TP.HCM)..."
+            style={{
+              width: '100%',
+              padding: '10px 14px',
+              border: '2px solid rgba(102, 126, 234, 0.2)',
+              borderRadius: '10px',
+              fontSize: '14px',
+              outline: 'none',
+              boxSizing: 'border-box',
+            }}
+          />
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button type="submit" disabled={loading} style={{
+              flex: 1,
+              padding: '10px 16px',
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '10px',
+              fontSize: '13px',
+              fontWeight: '600',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              opacity: loading ? 0.6 : 1,
+            }}>
+              {loading ? "⏳ Đang tìm..." : "🔍 Tìm kiếm"}
+            </button>
+            <button
+              type="button"
+              onClick={handleClearRoute}
+              style={{
+                padding: '10px 16px',
+                background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '10px',
+                fontSize: '13px',
+                fontWeight: '600',
+                cursor: 'pointer',
+              }}
+            >
+              🗑️
+            </button>
           </div>
-        )}
-      </form>
 
-      {/* Map Mode Switcher */}
-      <div style={mapModeSwitcherStyle}>
+          {/* Status Message */}
+          {statusMsg && (
+            <div style={{
+              fontSize: '12px',
+              padding: '8px 12px',
+              background: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
+              borderRadius: '8px',
+              color: '#2d3748',
+              fontWeight: '500',
+            }}>
+              {statusMsg}
+            </div>
+          )}
+        </form>
+
+        {/* Right side: User Info + Map Mode + History */}
         <div style={{
-          fontSize: '11px',
-          fontWeight: '700',
-          color: '#718096',
-          marginBottom: '4px',
-          textTransform: 'uppercase',
-          letterSpacing: '0.5px'
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '10px',
+          alignItems: 'flex-end',
         }}>
-          Chế độ bản đồ
+          {/* User Info Row */}
+          <div style={{
+            display: 'flex',
+            gap: '8px',
+            alignItems: 'center',
+          }}>
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.9) 100%)',
+              backdropFilter: 'blur(20px)',
+              border: '1px solid rgba(255, 255, 255, 0.8)',
+              borderRadius: '10px',
+              padding: '8px 14px',
+              boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)',
+              fontSize: '13px',
+              color: '#2d3748',
+              fontWeight: '600',
+              maxWidth: '180px',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}>
+              {currentUser?.isAnonymous ? '👤 Khách' : `👤 ${currentUser?.email?.split('@')[0] || 'User'}`}
+            </div>
+            <button
+              onClick={() => signOut()}
+              style={{
+                background: '#e53e3e',
+                color: 'white',
+                border: 'none',
+                borderRadius: '10px',
+                padding: '8px 14px',
+                fontSize: '12px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                boxShadow: '0 4px 16px rgba(229, 62, 62, 0.3)',
+              }}
+            >
+              Đăng xuất
+            </button>
+          </div>
+
+          {/* Map Mode Switcher */}
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.9) 100%)',
+            backdropFilter: 'blur(20px)',
+            padding: '10px',
+            borderRadius: '10px',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+            border: '1px solid rgba(255, 255, 255, 0.8)',
+            display: 'flex',
+            gap: '6px',
+          }}>
+            {(Object.keys(TILE_LAYERS) as MapMode[]).map((mode) => (
+              <button
+                key={mode}
+                onClick={() => setMapMode(mode)}
+                style={{
+                  padding: '6px 10px',
+                  background: mapMode === mode
+                    ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                    : 'white',
+                  color: mapMode === mode ? 'white' : '#4a5568',
+                  border: mapMode === mode ? 'none' : '2px solid rgba(102, 126, 234, 0.2)',
+                  borderRadius: '8px',
+                  fontSize: '11px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  boxShadow: mapMode === mode ? '0 4px 12px rgba(102, 126, 234, 0.3)' : 'none',
+                }}
+              >
+                {TILE_LAYERS[mode].name}
+              </button>
+            ))}
+          </div>
+
+          {/* Search History */}
+          <div style={{ position: 'relative' }}>
+            <SearchHistory onSelectHistory={handleSelectHistory} />
+          </div>
         </div>
-        {(Object.keys(TILE_LAYERS) as MapMode[]).map((mode) => (
-          <button
-            key={mode}
-            onClick={() => setMapMode(mode)}
-            style={mapMode === mode ? mapModeButtonActiveStyle : mapModeButtonStyle}
-          >
-            {TILE_LAYERS[mode].name}
-          </button>
-        ))}
       </div>
 
       {/* Map Container */}
@@ -358,9 +434,9 @@ export default function Map() {
                 paddingBottom: '8px',
                 borderBottom: '2px solid #e2e8f0'
               }}>
-                Vị trí tìm kiếm
+                📍 Vị trí tìm kiếm
               </div>
-              <small style={popupSmallTextStyle}>
+              <small style={{ color: '#718096', lineHeight: '1.6' }}>
                 Lat: {mapCenter[0].toFixed(6)}
                 <br />
                 Lon: {mapCenter[1].toFixed(6)}
@@ -377,7 +453,7 @@ export default function Map() {
             iconUrl={Marker2Url}
           >
             <Popup>
-              <div style={popupStyle}>
+              <div style={{ minWidth: "300px" }}>
                 <div style={{
                   fontSize: '18px',
                   fontWeight: '600',
@@ -402,7 +478,7 @@ export default function Map() {
                 }}>
                   Quán #{index + 1}/{pois.length}
                 </div>
-                <small style={popupSmallTextStyle}>
+                <small style={{ color: '#718096', lineHeight: '1.6' }}>
                   <div style={{ marginTop: '6px' }}>
                     Loại: {poi.type}
                   </div>
@@ -411,20 +487,31 @@ export default function Map() {
                   </div>
                   {poi.tags.phone && (
                     <div style={{ marginTop: '8px', color: '#4a5568' }}>
-                      Điện thoại: {poi.tags.phone}
+                      📞 {poi.tags.phone}
                     </div>
                   )}
                   {poi.tags.website && (
                     <div style={{ marginTop: '4px', color: '#4a5568' }}>
-                      Website: {poi.tags.website}
+                      🌐 {poi.tags.website}
                     </div>
                   )}
                 </small>
                 <button
                   onClick={() => handleGetRoute(poi)}
-                  style={routeButtonStyle}
+                  style={{
+                    width: '100%',
+                    marginTop: '12px',
+                    padding: '10px 16px',
+                    background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '13px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                  }}
                 >
-                  Chỉ đường tới đây
+                  🧭 Chỉ đường tới đây
                 </button>
               </div>
             </Popup>

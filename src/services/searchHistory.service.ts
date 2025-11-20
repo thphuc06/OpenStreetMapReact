@@ -1,4 +1,4 @@
-import { collection, addDoc, query, where, orderBy, limit, getDocs, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, query, where, orderBy, limit, getDocs, deleteDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 
 export interface SearchHistoryItem {
@@ -16,6 +16,17 @@ export interface SearchHistoryItem {
 export class SearchHistoryService {
   private static COLLECTION_NAME = 'searchHistory';
 
+  /**
+   * Save search history
+   * Firestore Structure (FLAT): 
+   * searchHistory/
+   *   └─ {autoId}/
+   *      ├─ userId: "QgFG6JEAirRuCsgDoqrhIPXEPP22"
+   *      ├─ searchQuery: "Quận 1"
+   *      ├─ location: { lat: 10.775, lon: 106.699 }
+   *      ├─ cafesFound: 5
+   *      └─ timestamp: November 20, 2025...
+   */
   static async saveSearch(
     userId: string,
     searchQuery: string,
@@ -25,7 +36,6 @@ export class SearchHistoryService {
   ): Promise<void> {
     try {
       console.log(`💾 Saving search: "${searchQuery}" for user ${userId}`);
-      console.log(`🔑 Saving with userId: "${userId}" (type: ${typeof userId})`);
 
       const searchData = {
         userId,
@@ -35,10 +45,9 @@ export class SearchHistoryService {
         timestamp: Timestamp.now(),
       };
 
-      const docRef = await addDoc(collection(db, this.COLLECTION_NAME), searchData);
+      await addDoc(collection(db, this.COLLECTION_NAME), searchData);
 
-      console.log(`✅ Search history saved successfully with ID: ${docRef.id}`);
-      console.log(`📝 Saved data:`, { userId, searchQuery, cafesFound });
+      console.log('✅ Search history saved successfully');
     } catch (error) {
       console.error('❌ Error saving search history:', error);
       // Don't throw - we don't want to break the main search flow
@@ -52,7 +61,6 @@ export class SearchHistoryService {
   static async getUserHistory(userId: string, maxResults: number = 3): Promise<SearchHistoryItem[]> {
     try {
       console.log(`📚 Loading search history for user: ${userId} (limit: ${maxResults})`);
-      console.log(`🔑 userId type: ${typeof userId}, length: ${userId?.length}`);
 
       const searchHistoryRef = collection(db, this.COLLECTION_NAME);
 
@@ -64,9 +72,7 @@ export class SearchHistoryService {
         limit(maxResults)
       );
 
-      console.log('🔍 Executing Firestore query...');
       const querySnapshot = await getDocs(q);
-      console.log(`📦 Query returned ${querySnapshot.size} documents`);
 
       const history = querySnapshot.docs.map(doc => ({
         id: doc.id,
@@ -78,15 +84,9 @@ export class SearchHistoryService {
       );
 
       return history;
-    } catch (error: any) {
+    } catch (error) {
       console.error('❌ Error getting search history:', error);
-
-      // Check if it's a Firebase index error
-      if (error?.message?.includes('index')) {
-        console.error('🔥 FIREBASE INDEX REQUIRED!');
-        console.error('Create index at: https://console.firebase.google.com/project/weather-f2f43/firestore/indexes');
-        console.error('Index needed: Collection=searchHistory, Fields=[userId(Asc), timestamp(Desc)]');
-      }
+      console.error('Error details:', error);
 
       // Return empty array instead of throwing
       return [];
@@ -102,7 +102,7 @@ export class SearchHistoryService {
       const q = query(searchHistoryRef, where('userId', '==', userId));
       const querySnapshot = await getDocs(q);
 
-      const deletePromises = querySnapshot.docs.map(doc => doc.ref.delete());
+      const deletePromises = querySnapshot.docs.map(doc => deleteDoc(doc.ref));
       await Promise.all(deletePromises);
 
       console.log('✅ Search history cleared');

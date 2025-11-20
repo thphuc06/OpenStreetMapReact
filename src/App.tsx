@@ -1,7 +1,17 @@
 import "leaflet/dist/leaflet.css";
 import Map from "./Map";
+import { LoginPage } from "./pages/LoginPage";
+import { useAuth } from "./contexts/AuthContext";
 
 export default function App() {
+  const { currentUser } = useAuth();
+
+  // If not authenticated, show login page
+  if (!currentUser) {
+    return <LoginPage />;
+  }
+
+  // If authenticated, show main app
   return (
     <div className="App">
       <header style={{

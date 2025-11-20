@@ -8,12 +8,17 @@ import type { Map as LeafletMap } from "leaflet";
 // Components
 import CustomMarker from "./custom-marker";
 import { WeatherCard } from "./components/WeatherCard";
+import { SearchHistory } from "./components/SearchHistory";
 
 // Services
 import { GeocodingService } from "./services/geocoding.service";
 import { POIService } from "./services/poi.service";
 import { RoutingService } from "./services/routing.service";
 import { WeatherService } from "./services/weather.service";
+import { SearchHistoryService } from "./services/searchHistory.service";
+
+// Context
+import { useAuth } from "./contexts/AuthContext";
 
 // Types
 import type { POI } from "./types/poi.types";
@@ -75,6 +80,9 @@ const TILE_LAYERS: Record<MapMode, TileLayerConfig> = {
 };
 
 export default function Map() {
+  // Auth
+  const { currentUser, signOut } = useAuth();
+
   // State
   const [inputValue, setInputValue] = useState<string>("");
   const [pois, setPois] = useState<POI[]>([]);
@@ -143,6 +151,21 @@ export default function Map() {
       setWeatherOverview(overview);
       setStatusMsg(`Tìm thấy ${foundPois.length} quán cà phê. Thời tiết đã cập nhật.`);
 
+      // Step 5: Save search history if user is logged in
+      if (currentUser) {
+        try {
+          await SearchHistoryService.saveSearch(
+            currentUser.uid,
+            inputValue,
+            parseFloat(lat),
+            parseFloat(lon),
+            foundPois.length
+          );
+        } catch (historyError) {
+          console.error('Error saving search history:', historyError);
+        }
+      }
+
     } catch (error) {
       console.error("Search error:", error);
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
@@ -178,8 +201,86 @@ export default function Map() {
     setStatusMsg("");
   };
 
+  const handleSelectHistory = async (lat: number, lon: number, query: string) => {
+    if (!mapInstance) return;
+
+    setInputValue(query);
+    setLoading(true);
+    setStatusMsg("Đang tải từ lịch sử...");
+
+    try {
+      const newCenter: [number, number] = [lat, lon];
+      mapInstance.flyTo(newCenter, API_CONFIG.DEFAULT_ZOOM);
+      setMapCenter(newCenter);
+
+      setStatusMsg("Đang tìm quán cà phê gần đây...");
+      const foundPois = await POIService.findNearby(lat, lon);
+
+      setPois(foundPois);
+      setRouteGeoJSON(null);
+
+      const [weather, overview] = await Promise.all([
+        WeatherService.getWeatherData(lat, lon),
+        WeatherService.getWeatherOverview(lat, lon)
+      ]);
+
+      setWeatherData(weather);
+      setWeatherOverview(overview);
+      setStatusMsg(`Tìm thấy ${foundPois.length} quán cà phê. Thời tiết đã cập nhật.`);
+    } catch (error) {
+      console.error("History search error:", error);
+      setStatusMsg("Lỗi tìm kiếm");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div style={mapContainerStyle}>
+      {/* User Info & Logout */}
+      <div style={{
+        position: 'absolute',
+        top: '20px',
+        right: '20px',
+        zIndex: 1000,
+        display: 'flex',
+        gap: '8px',
+        alignItems: 'center',
+      }}>
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.9) 100%)',
+          backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255, 255, 255, 0.8)',
+          borderRadius: '12px',
+          padding: '10px 16px',
+          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)',
+          fontSize: '14px',
+          color: '#2d3748',
+          fontWeight: '500',
+        }}>
+          {currentUser?.isAnonymous ? '👤 Khách' : `👤 ${currentUser?.email || 'User'}`}
+        </div>
+        <button
+          onClick={() => signOut()}
+          style={{
+            background: '#e53e3e',
+            color: 'white',
+            border: 'none',
+            borderRadius: '12px',
+            padding: '10px 16px',
+            fontSize: '13px',
+            fontWeight: '600',
+            cursor: 'pointer',
+            boxShadow: '0 4px 16px rgba(229, 62, 62, 0.3)',
+          }}
+        >
+          Đăng xuất
+        </button>
+      </div>
+
+      {/* Search History */}
+      <SearchHistory onSelectHistory={handleSelectHistory} />
+
       {/* Search Form */}
       <form onSubmit={handleSubmit} style={formStyle}>
         <input

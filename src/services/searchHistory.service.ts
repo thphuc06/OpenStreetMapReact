@@ -56,12 +56,11 @@ export class SearchHistoryService {
 
       const searchHistoryRef = collection(db, this.COLLECTION_NAME);
 
-      // TEMPORARY: Query without orderBy to test if index is the issue
-      // TODO: Restore orderBy after creating Firebase index
+      // Query: where userId matches, order by timestamp desc, limit to maxResults
       const q = query(
         searchHistoryRef,
         where('userId', '==', userId),
-        // orderBy('timestamp', 'desc'),  // ← COMMENTED OUT - needs composite index
+        orderBy('timestamp', 'desc'),
         limit(maxResults)
       );
 
@@ -73,13 +72,6 @@ export class SearchHistoryService {
         id: doc.id,
         ...doc.data()
       } as SearchHistoryItem));
-
-      // TEMPORARY: Sort in memory since we can't use orderBy without index
-      history.sort((a, b) => {
-        const timeA = a.timestamp?.toMillis() || 0;
-        const timeB = b.timestamp?.toMillis() || 0;
-        return timeB - timeA; // DESC (newest first)
-      });
 
       console.log(`✅ Found ${history.length} search history items:`,
         history.map(h => `"${h.searchQuery}" (${h.cafesFound} cafes)`)

@@ -54,8 +54,8 @@ def translate():
 
 # Main function - chạy server
 if __name__ == '__main__':
-    # Lấy port từ environment hoặc dùng 5000
-    port = int(os.getenv('PORT', 5000))
+    # Lấy port từ environment hoặc dùng 8080    
+    port = int(os.getenv('PORT', 8080))
 
     print("=" * 50)
     print(f"🚀 Flask Translation API đang chạy!")

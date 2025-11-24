@@ -1,10 +1,15 @@
 import "leaflet/dist/leaflet.css";
+import { useState } from "react";
 import Map from "./Map";
 import { LoginPage } from "./pages/LoginPage";
 import { useAuth } from "./contexts/AuthContext";
+import { TranslationCard } from "./components/TranslationCard";
+
+type ActiveView = 'map' | 'translator';
 
 export default function App() {
   const { currentUser } = useAuth();
+  const [activeView, setActiveView] = useState<ActiveView>('map');
 
   // If not authenticated, show login page
   if (!currentUser) {
@@ -47,8 +52,56 @@ export default function App() {
         }}>
           Khám phá các quán cà phê và đường đi tới đó
         </p>
+
+        {/* Navigation Tabs */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          gap: '12px',
+          marginTop: '20px',
+        }}>
+          <button
+            onClick={() => setActiveView('map')}
+            style={{
+              padding: '10px 24px',
+              fontSize: '14px',
+              fontWeight: '600',
+              color: activeView === 'map' ? 'white' : '#667eea',
+              background: activeView === 'map'
+                ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                : 'white',
+              border: '2px solid #667eea',
+              borderRadius: '10px',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              boxShadow: activeView === 'map' ? '0 4px 12px rgba(102, 126, 234, 0.3)' : 'none',
+            }}
+          >
+            Coffee Map
+          </button>
+          <button
+            onClick={() => setActiveView('translator')}
+            style={{
+              padding: '10px 24px',
+              fontSize: '14px',
+              fontWeight: '600',
+              color: activeView === 'translator' ? 'white' : '#667eea',
+              background: activeView === 'translator'
+                ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                : 'white',
+              border: '2px solid #667eea',
+              borderRadius: '10px',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              boxShadow: activeView === 'translator' ? '0 4px 12px rgba(102, 126, 234, 0.3)' : 'none',
+            }}
+          >
+            EN → VI Translator
+          </button>
+        </div>
       </header>
-      <Map />
+
+      {activeView === 'map' ? <Map /> : <TranslationCard />}
     </div>
   );
 }

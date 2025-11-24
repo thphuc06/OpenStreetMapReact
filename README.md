@@ -1,6 +1,14 @@
 # OpenStreetMap React Weather App 🌦️🗺️
 
-This project is a weather application built with React (Vite) and OpenStreetMap, hosted on Firebase.
+This project is a coffee shop finder application with weather information built with React (Vite) and OpenStreetMap. It includes an English to Vietnamese translator for international users.
+
+## ✨ Features
+
+- 🗺️ **Interactive Map**: Find coffee shops near you using OpenStreetMap
+- 🌦️ **Weather Information**: Get real-time weather data for locations
+- 🔐 **Authentication**: Secure login with Firebase Authentication
+- 🔄 **Translation**: English to Vietnamese translator for international visitors
+- 📱 **Responsive Design**: Works on desktop and mobile devices
 
 ## 🛠️ Tech Stack
 
@@ -89,12 +97,52 @@ OpenStreetMapReact/
 └── README.md            # Project documentation
 ```
 
+## 🚂 Railway Deployment
+
+This project can also be deployed to Railway for easy hosting and deployment.
+
+### Quick Deploy to Railway
+
+1. **Create a Railway Account**
+   - Go to [railway.app](https://railway.app) and sign up with GitHub
+
+2. **Deploy from GitHub**
+   - Click "New Project" on Railway dashboard
+   - Select "Deploy from GitHub repo"
+   - Choose this repository
+   - Railway will automatically detect the configuration from `railway.toml`
+
+3. **Configure Environment Variables**
+   - No additional environment variables needed for basic deployment
+   - Firebase config is already in the code (for development only)
+
+4. **Deploy**
+   - Railway will automatically build and deploy your app
+   - You'll get a public URL like `https://your-app.railway.app`
+
+### Railway Configuration
+
+The project includes a `railway.toml` file that:
+- Builds the project using `npm run build`
+- Starts the server using Vite preview mode
+- Automatically handles port binding
+
+### Local Testing for Railway
+
+To test the production build locally:
+
+```bash
+npm run build
+npm run start
+```
+
 ## 🛡️ Note on Security
 
 The Firebase configuration (API Keys) is included in the source code. These keys are protected by **Google Cloud API Restrictions** and are only authorized to run on:
 
   - `localhost`
   - `weather-f2f43.web.app`
+  - Your Railway deployment URL (add this in Firebase Console)
 
 -----
 

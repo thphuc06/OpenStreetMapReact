@@ -1,107 +1,147 @@
-# OpenStreetMap React Weather App 🌦️🗺️
+# Coffee Shop Finder 🗺️☕
 
-This project is a coffee shop finder application with weather information built with React (Vite) and OpenStreetMap. It includes an English to Vietnamese translator for international users.
+A web application for finding nearby coffee shops with map display, routing, weather forecast, and English to Vietnamese translation features.
 
 ## ✨ Features
 
-- 🗺️ **Interactive Map**: Find coffee shops near you using OpenStreetMap
-- 🌦️ **Weather Information**: Get real-time weather data for locations
-- 🔐 **Authentication**: Secure login with Firebase Authentication
-- 🔄 **Translation**: English to Vietnamese translator for international visitors
-- 📱 **Responsive Design**: Works on desktop and mobile devices
+1. **Location Search** - Find coffee shops near any location
+2. **Map Display** - 4 map modes: Standard, Satellite, Dark, Terrain
+3. **Routing** - Show route and travel time to selected shop
+4. **Weather Forecast** - Current, hourly, and daily weather
+5. **Search History** - Save and revisit previous searches (for authenticated users)
+6. **Translation** - English to Vietnamese translator for international visitors
 
 ## 🛠️ Tech Stack
 
--   **Frontend:** React (Vite), TypeScript
--   **Map:** Leaflet / OpenStreetMap
--   **Hosting & Backend:** Firebase (Hosting, Authentication)
--   **CI/CD:** GitHub Actions
+- **Frontend:** React + TypeScript + Vite
+- **Map:** Leaflet + OpenStreetMap
+- **Backend:** Firebase (Authentication + Firestore) + Flask (Translation API)
+- **Deployment:** GitHub Actions CI/CD + Firebase Hosting + Railway
+- **APIs:**
+  - OpenStreetMap (Nominatim, Overpass, OSRM)
+  - OpenWeather API
+  - Google Translate API (via Flask backend)
+
+## 📋 Requirements
+
+- Node.js >= 18.0.0
+- npm or yarn
+- Git
 
 ## 🚀 Getting Started
 
-Follow these steps to run the project locally on your machine.
-
-### 1. Prerequisites
-
-Make sure you have **Node.js** installed on your machine.
-[Download Node.js here](https://nodejs.org/)
-
-### 2. Clone the repository
-
-Open your terminal and run:
-
+### 1. Clone Repository
 ```bash
-git clone [https://github.com/thphuc06/OpenStreetMapReact.git](https://github.com/thphuc06/OpenStreetMapReact.git)
+git clone https://github.com/thphuc06/OpenStreetMapReact.git
 cd OpenStreetMapReact
-````
+```
 
-Since `node_modules` is not included in the repository, you must install the required libraries:
-
+### 2. Install Dependencies
 ```bash
 npm install
 ```
 
-### 4\. Run locally
-
-Start the development server:
-
+### 3. Run Development Server
 ```bash
 npm run dev
 ```
 
-Open your browser and navigate to `http://localhost:5173` to see the app.
+Application will run at: `http://localhost:5173`
 
------
+## 🔑 Authentication
 
-## 📦 Building & Deployment
+**Note:** Firebase Authentication is pre-configured.
 
-This project uses **GitHub Actions** for automatic deployment.
+Users can:
+- Sign in with Google
+- Sign up/Sign in with Email
+- Continue as Guest (Anonymous)
 
-### Automatic Deployment
+## 🤝 Contributing & Deployment
 
-Just push your changes to the `main` branch, and GitHub will automatically build and deploy to Firebase:
+### For Collaborators/Partners
 
+This project uses **GitHub Actions CI/CD** for automatic deployment. You don't need Firebase CLI or any credentials!
+
+#### Basic Workflow:
 ```bash
+# 1. Create a new branch for your feature
+git checkout -b feature/your-feature-name
+
+# 2. Make your changes and test locally
+npm run dev
+
+# 3. Commit your changes
 git add .
-git commit -m "Your commit message"
-git push origin main
+git commit -m "Add: your feature description"
+
+# 4. Push to GitHub
+git push origin feature/your-feature-name
+
+# 5. Create Pull Request on GitHub
+# Go to https://github.com/thphuc06/OpenStreetMapReact/pulls
+# Click "New Pull Request"
 ```
 
-### Manual Build (Optional)
+#### Deployment Process:
 
-If you want to build the production version locally:
+- **Pull Request** → 🔍 Creates preview deployment for testing
+- **Merge to `main`** → 🚀 Automatically deploys to production
+- **No manual steps needed!** GitHub Actions handles everything
 
-```bash
-npm run build
-```
+#### Important Notes:
 
-The output will be in the `dist` folder.
+✅ You need to be added as a **collaborator** on GitHub
+✅ Always create a **new branch** for your changes
+✅ Create a **Pull Request** instead of pushing directly to `main`
+✅ Wait for **preview deployment** to test your changes
+✅ Check **GitHub Actions** tab to see deployment status
+
+### Deployment Status
+
+- **Production:** https://weather-f2f43.web.app
+- **Backend API:** https://openstreetmapreact-production.up.railway.app
+- **Preview:** Automatic URL generated for each Pull Request
+
+### Branch Protection (Best Practice)
+
+If `main` branch is protected:
+1. You **cannot** push directly to `main`
+2. You **must** create a Pull Request
+3. Code review may be required before merge
+4. Tests must pass before deployment
 
 ## 📂 Project Structure
-
 ```
 OpenStreetMapReact/
-├── .github/workflows/   # CI/CD configurations
-├── dist/                # Production build (generated after build)
+├── .github/
+│   └── workflows/
+│       ├── firebase-hosting-merge.yml         # Auto-deploy on merge
+│       └── firebase-hosting-pull-request.yml  # Preview on PR
+├── src/
+│   ├── components/       # React components
+│   ├── services/         # API services (Geocoding, POI, Routing, Weather)
+│   ├── contexts/         # React contexts (Auth)
+│   ├── types/           # TypeScript type definitions
+│   ├── constants/       # API configurations
+│   └── styles/          # CSS and style definitions
+├── backend/             # Flask translation API
+│   ├── app.py          # Main Flask application
+│   ├── requirements.txt # Python dependencies
+│   ├── Procfile        # Railway deployment config
+│   └── README.md       # Backend documentation
 ├── public/              # Static assets
-├── src/                 # Source code
-│   ├── assets/          # Images, icons
-│   ├── components/      # React components
-│   ├── firebaseConfig.ts # Firebase configuration
-│   ├── App.tsx          # Main application component
-│   └── main.tsx         # Entry point
-├── .gitignore           # Git ignore rules
-├── firebase.json        # Firebase hosting config
-├── index.html           # HTML entry point
-├── package.json         # Project dependencies and scripts
-└── README.md            # Project documentation
+├── firebase.json        # Firebase hosting configuration
+├── firestore.rules      # Firestore security rules
+├── railway.toml         # Railway frontend config
+└── .firebaserc          # Firebase project configuration
 ```
 
-## 🚂 Railway Deployment
+## 🚂 Railway Backend Deployment
 
-This project can also be deployed to Railway for easy hosting and deployment.
+This project uses Railway to host the Flask translation backend API.
 
-### Quick Deploy to Railway
+### Quick Deploy Backend to Railway
 
 1. **Create a Railway Account**
    - Go to [railway.app](https://railway.app) and sign up with GitHub
@@ -110,89 +150,93 @@ This project can also be deployed to Railway for easy hosting and deployment.
    - Click "New Project" on Railway dashboard
    - Select "Deploy from GitHub repo"
    - Choose this repository
-   - Railway will automatically detect the configuration from `railway.toml`
+   - **IMPORTANT:** Set Root Directory to `backend`
 
-3. **Configure Environment Variables**
-   - No additional environment variables needed for basic deployment
-   - Firebase config is already in the code (for development only)
+3. **Configure**
+   - Railway will automatically detect `Procfile`
+   - No additional environment variables needed
 
 4. **Deploy**
-   - Railway will automatically build and deploy your app
-   - You'll get a public URL like `https://your-app.railway.app`
+   - Railway will automatically build and deploy your Flask API
+   - You'll get a public URL like `https://your-app.up.railway.app`
 
-### Railway Configuration
-
-The project includes a `railway.toml` file that:
-- Builds the project using `npm run build`
-- Starts the server using Vite preview mode
-- Automatically handles port binding
-
-### Local Testing for Railway
-
-To test the production build locally:
+### Local Testing for Railway Backend
 
 ```bash
-npm run build
-npm run start
+cd backend
+pip install -r requirements.txt
+python app.py
 ```
 
-## 🛡️ Note on Security
+## 🔐 Environment & Secrets
+
+**For contributors:** No setup needed! All credentials are pre-configured:
+
+- ✅ Firebase configuration (in `src/firebaseConfig.ts`)
+- ✅ Weather API key (in `src/constants/weather.constants.ts`)
+- ✅ GitHub Secrets for CI/CD deployment
+- ✅ Translation API backend (Railway)
+
+### Security Notes
 
 The Firebase configuration (API Keys) is included in the source code. These keys are protected by **Google Cloud API Restrictions** and are only authorized to run on:
+- `localhost`
+- `weather-f2f43.web.app`
+- Your Railway deployment URL (add this in Firebase Console)
 
-  - `localhost`
-  - `weather-f2f43.web.app`
-  - Your Railway deployment URL (add this in Firebase Console)
+## 🐛 Troubleshooting
 
------
+### Deployment Failed?
+1. Check **GitHub Actions** logs in the "Actions" tab
+2. Ensure you have **push permissions** to the repository
+3. Verify build succeeds locally: `npm run build`
+4. Check **Firebase Hosting** quota/limits
 
-**Author:** [thphuc06](https://www.google.com/search?q=https://github.com/thphuc06)
-
-
-## 🔧 Administrator Guide (For Owner Only)
-
-These steps are for the project owner (`thphuc06`) when setting up the project on a new machine to manage deployments manually.
-
-### 1. One-time Setup on New Machine
-If you are on a fresh computer, you need to install Firebase CLI globally and log in to your Google account.
-
+### Local Development Issues?
 ```bash
-# 1. Install Firebase Tools globally (if not installed)
-npm install -g firebase-tools
+# Clear cache and reinstall
+rm -rf node_modules package-lock.json
+npm install
 
-# 2. Login to your Google Account (The one hosting the project)
-firebase login
-````
+# Clear build cache
+rm -rf dist
 
-*Note: You **DO NOT** need to run `firebase init` again, as the configuration files (`firebase.json`, `.firebaserc`) are already in the repo.*
-
-### 2\. Deployment Workflows
-
-#### Method A: Automatic Deployment (Recommended)
-
-Just push to the `main` branch. GitHub Actions will handle the build and deploy process.
-
-```bash
-git push origin main
-```
-
-#### Method B: Manual Deployment (Emergency only)
-
-If GitHub Actions is down or you need to force a deploy from your local machine:
-
-```bash
-# 1. Build the project
+# Rebuild
 npm run build
-
-# 2. Deploy to Firebase
-firebase deploy
 ```
 
-### 3\. Troubleshooting
-
-If you encounter permission errors during deployment, ensure you are logged in with the correct account:
-
+### Pull Request Workflow Issues?
 ```bash
-firebase logout
-firebase login
+# Make sure you're on the latest main branch
+git checkout main
+git pull origin main
+
+# Create a new branch
+git checkout -b feature/my-feature
+
+# After making changes
+git add .
+git commit -m "Description of changes"
+git push origin feature/my-feature
 ```
+
+### Can't Push to Repository?
+- Contact project maintainer to be added as a **collaborator**
+- Check if you're pushing to the correct remote: `git remote -v`
+- Verify your GitHub authentication: `git config user.name` and `git config user.email`
+
+## 🌐 Live Demo
+
+**Production URL:** https://weather-f2f43.web.app
+
+## 📝 Notes
+
+- API keys are pre-configured and protected by Firebase Security Rules
+- All features work out of the box after `npm install`
+- Authentication is required for search history feature
+- Guest/anonymous users can use the app but won't have search history saved
+- Translation feature uses Google Translate via Railway backend
+
+## 👤 Author
+
+[thphuc06](https://github.com/thphuc06)

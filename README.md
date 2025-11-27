@@ -114,27 +114,27 @@ If `main` branch is protected:
 ## 📂 Project Structure
 ```
 OpenStreetMapReact/
-├── .github/
-│   └── workflows/
-│       ├── firebase-hosting-merge.yml         # Auto-deploy on merge
-│       └── firebase-hosting-pull-request.yml  # Preview on PR
+├── .github/workflows/       # GitHub Actions CI/CD
+├── backend/                 # Flask translation API (Railway)
+│   ├── app.py
+│   ├── requirements.txt
+│   └── Procfile
 ├── src/
-│   ├── components/       # React components
-│   ├── services/         # API services (Geocoding, POI, Routing, Weather)
-│   ├── contexts/         # React contexts (Auth)
-│   ├── types/           # TypeScript type definitions
-│   ├── constants/       # API configurations
-│   └── styles/          # CSS and style definitions
-├── backend/             # Flask translation API
-│   ├── app.py          # Main Flask application
-│   ├── requirements.txt # Python dependencies
-│   ├── Procfile        # Railway deployment config
-│   └── README.md       # Backend documentation
-├── public/              # Static assets
-├── firebase.json        # Firebase hosting configuration
-├── firestore.rules      # Firestore security rules
-├── railway.toml         # Railway frontend config
-└── .firebaserc          # Firebase project configuration
+│   ├── assets/             # SVG icons
+│   ├── components/         # React components (Auth, Weather, Search, Translation)
+│   ├── constants/          # API configurations
+│   ├── contexts/           # React contexts (AuthContext)
+│   ├── pages/              # Page components (LoginPage)
+│   ├── services/           # API services (Geocoding, POI, Routing, Weather, History)
+│   ├── styles/             # Style definitions
+│   ├── types/              # TypeScript type definitions
+│   ├── App.tsx             # Main app
+│   ├── Map.tsx             # Map component
+│   └── firebaseConfig.ts   # Firebase config
+├── firebase.json           # Firebase hosting
+├── firestore.rules         # Firestore security
+├── package.json            # Dependencies
+└── tsconfig.json           # TypeScript config
 ```
 
 ## 🚂 Railway Backend Deployment

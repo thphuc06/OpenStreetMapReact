@@ -14,7 +14,7 @@ app = Flask(__name__)
 # Enable CORS cho tất cả routes
 CORS(app)
 
-# Tạo Hugging Face client cho chatbot
+# Tạo Hugging Face client cho chatbot   
 hf_api_key = os.getenv('HF_TOKEN')
 if not hf_api_key:
     raise ValueError("HF TOKEN environment variable is required")

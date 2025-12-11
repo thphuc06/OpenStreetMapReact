@@ -54,6 +54,8 @@ temperature=0.7
 
 ## Cài đặt
 
+### Frontend
+
 ```bash
 # Clone repository
 git clone https://github.com/thphuc06/OpenStreetMapReact.git
@@ -64,15 +66,29 @@ npm install
 
 # Run frontend
 npm run dev
+```
 
-# Setup backend
+### Backend
+
+```bash
+# Navigate to backend folder
 cd backend
+
+# Create Python virtual environment
 python -m venv venv
 venv\Scripts\activate  # Windows
+source venv/bin/activate  # Linux/Mac
+
+# Install dependencies
 pip install -r requirements.txt
 
-# Create .env file
-echo HUGGINGFACE_API_KEY=your_api_key_here > .env
+# Setup environment variables
+# Copy .env.example and fill in your API key
+cp .env.example .env
+
+# Get your Hugging Face API key from: https://huggingface.co/settings/tokens
+# Then edit .env file and replace 'your_huggingface_api_key_here' with your actual key
+# Example: HUGGINGFACE_API_KEY=hf_xxxxxxxxxxxxxxxxxxxxx
 
 # Run backend
 python app.py
@@ -94,6 +110,27 @@ OpenStreetMapReact/
 ```
 
 ## Deployment
+
+### Deploy Backend lên Railway
+
+1. Tạo tài khoản tại [Railway.app](https://railway.app)
+2. Tạo new project từ GitHub repository
+3. **QUAN TRỌNG**: Thêm Environment Variables trong Railway Dashboard:
+   - Key: `HUGGINGFACE_API_KEY`
+   - Value: `your_actual_api_key_here`
+4. Railway sẽ tự động deploy khi có commit mới
+
+### Deploy Frontend lên Firebase
+
+```bash
+# Build frontend
+npm run build
+
+# Deploy to Firebase
+firebase deploy
+```
+
+### Links
 
 - **Production**: https://weather-f2f43.web.app
 - **Backend API**: https://openstreetmapreact-production.up.railway.app

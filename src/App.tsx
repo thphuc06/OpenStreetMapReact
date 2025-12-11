@@ -4,6 +4,7 @@ import Map from "./Map";
 import { LoginPage } from "./pages/LoginPage";
 import { useAuth } from "./contexts/AuthContext";
 import { TranslationCard } from "./components/TranslationCard";
+import CoffeeChatbot from "./components/CoffeeChatbot";
 
 type ActiveView = 'map' | 'translator';
 
@@ -102,6 +103,9 @@ export default function App() {
       </header>
 
       {activeView === 'map' ? <Map /> : <TranslationCard />}
+
+      {/* Coffee Chatbot - luôn hiển thị */}
+      <CoffeeChatbot apiUrl={import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api/chatbot` : undefined} />
     </div>
   );
 }

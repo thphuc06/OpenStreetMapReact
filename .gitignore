@@ -96,3 +96,7 @@ backend/venv/
 backend/env/
 backend/ENV/
 backend/.venv
+
+# Backend specific (merged from backend/.gitignore)
+backend/*.swp
+backend/*.swo

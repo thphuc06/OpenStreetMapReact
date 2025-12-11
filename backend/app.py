@@ -15,9 +15,9 @@ app = Flask(__name__)
 CORS(app)
 
 # Tạo Hugging Face client cho chatbot
-hf_api_key = os.getenv('HUGGINGFACE_API_KEY')
+hf_api_key = os.getenv('HF_TOKEN')
 if not hf_api_key:
-    raise ValueError("HUGGINGFACE_API_KEY environment variable is required")
+    raise ValueError("HF TOKEN environment variable is required")
 hf_client = InferenceClient(api_key=hf_api_key)
 
 # System prompt cho chuyên gia cafe

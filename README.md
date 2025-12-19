@@ -87,8 +87,7 @@ pip install -r requirements.txt
 cp .env.example .env
 
 # Get your Hugging Face API key from: https://huggingface.co/settings/tokens
-# Then edit .env file and replace 'your_huggingface_api_key_here' with your actual key
-# Example: HUGGINGFACE_API_KEY=hf_xxxxxxxxxxxxxxxxxxxxx
+# Example: HF_TOKEN=hf_xxxxxxxxxxxxxxxxxxxxx
 
 # Run backend
 python app.py
